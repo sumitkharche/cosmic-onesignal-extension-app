@@ -37,7 +37,6 @@ app.post('/api/create', async function (request, response) {
   var req = https.request(options, function (res) {
       res.on('data', function (data) {
           console.log("Response:");
-          console.log(JSON.parse(data));
       });
   });
 
@@ -59,7 +58,8 @@ app.post('/api/addBucketSlug', async (req, res) => {
             onesignalapiid,
             onesignalrestapikey,
             onesignalnotificationheading,
-            onesignalnotificationcontent
+            onesignalnotificationcontent,
+            addWebhookId
           } = req.body;
     if (!id || !slug) {
       throw new Error('Must provide bucket id and slug');
@@ -67,7 +67,7 @@ app.post('/api/addBucketSlug', async (req, res) => {
 
     const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
 
-    await searchBucket.addObject({
+    const params = {
       content: slug,
       slug: id,
       title: id,
@@ -100,10 +100,17 @@ app.post('/api/addBucketSlug', async (req, res) => {
           title: "onesignal-notification-content",
           type: "text",
           children: null
+        },
+        {
+          value: addWebhookId,
+          key: "addWebhookId",
+          title: "addWebhookId",
+          type: "text",
+          children: null
         }
       ]
-    });
-
+    }
+    await searchBucket.addObject(params);
     return res.status(200).send();
   } catch (e) {
     console.error(e); // eslint-disable-line no-console
@@ -111,6 +118,72 @@ app.post('/api/addBucketSlug', async (req, res) => {
   }
 });
 
+app.post('/api/editBucketSlug', async (req, res) => {
+  try {   
+    const { id, 
+            slug,
+            onesignalapiid,
+            onesignalrestapikey,
+            onesignalnotificationheading,
+            onesignalnotificationcontent,
+            addWebhookId
+          } = req.body;
+    if (!id || !slug) {
+      throw new Error('Must provide bucket id and slug');
+    }
+
+    const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
+
+    const params = {
+      content: slug,
+      slug: id,
+      title: id,
+      type_slug: 'onesignal-details',
+      metafields: [
+        {
+          value: onesignalapiid,
+          key: "onesignalapiid",
+          title: "onesignal-api-id",
+          type: "text",
+          children: null
+        },
+        {
+          value: onesignalrestapikey,
+          key: "onesignalrestapikey",
+          title: "onesignal-rest-api-key",
+          type: "text",
+          children: null
+        },
+        {
+          value: onesignalnotificationheading,
+          key: "onesignalnotificationheading",
+          title: "onesignal-notification-heading",
+          type: "text",
+          children: null
+        },
+        {
+          value: onesignalnotificationcontent,
+          key: "onesignalnotificationcontent",
+          title: "onesignal-notification-content",
+          type: "text",
+          children: null
+        },
+        {
+          value: addWebhookId,
+          key: "addWebhookId",
+          title: "addWebhookId",
+          type: "text",
+          children: null
+        }
+      ]
+    }
+    await searchBucket.editObject(params);
+    return res.status(200).send();
+  } catch (e) {
+    console.error(e); // eslint-disable-line no-console
+    return res.status(400).json({ error: e.message });
+  }
+});
 
 app.post('/api/removeBucketSlug/:id', async (req, res) => {
   try {
@@ -121,6 +194,9 @@ app.post('/api/removeBucketSlug/:id', async (req, res) => {
     }
 
     const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
+    const bucketData = await searchBucket.getObject({ slug: id }).catch(() => undefined);
+    const deleteWebhookBucket =  Cosmic.bucket({ slug: id });
+    await deleteWebhookBucket.deleteWebhook({id: bucketData.object.metadata.addWebhookId});
     await searchBucket.deleteObject({ slug: id }).catch(() => undefined);
     return res.status(200).send();
   } catch (e) {
