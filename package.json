@@ -1,13 +1,13 @@
 {
   "name": "cosmic-onesignal-extension-app",
   "version": "1.0.0",
-  "description": "Api for sending One-Signal push notification ",
+  "description": "Api for sending One-Signal push notification from Cosmic JS bucket",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "server": "nodemon server.js"
   },
-  "keywords": [],
+  "keywords": ["onesignal", "cosmicjs"],
   "author": "Sumit Kharche",
   "license": "ISC",
   "dependencies": {

@@ -59,7 +59,8 @@ app.post('/api/addBucketSlug', async (req, res) => {
             onesignalrestapikey,
             onesignalnotificationheading,
             onesignalnotificationcontent,
-            addWebhookId
+            addWebhookId,
+            bucketSlug
           } = req.body;
     if (!id || !slug) {
       throw new Error('Must provide bucket id and slug');
@@ -69,7 +70,7 @@ app.post('/api/addBucketSlug', async (req, res) => {
 
     const params = {
       content: slug,
-      slug: id,
+      slug: slug,
       title: id,
       type_slug: 'onesignal-details',
       metafields: [
@@ -105,6 +106,13 @@ app.post('/api/addBucketSlug', async (req, res) => {
           value: addWebhookId,
           key: "addWebhookId",
           title: "addWebhookId",
+          type: "text",
+          children: null
+        },
+        {
+          value: bucketSlug,
+          key: "bucketSlug",
+          title: "bucketSlug",
           type: "text",
           children: null
         }
@@ -126,7 +134,8 @@ app.post('/api/editBucketSlug', async (req, res) => {
             onesignalrestapikey,
             onesignalnotificationheading,
             onesignalnotificationcontent,
-            addWebhookId
+            addWebhookId,
+            bucketSlug
           } = req.body;
     if (!id || !slug) {
       throw new Error('Must provide bucket id and slug');
@@ -136,7 +145,7 @@ app.post('/api/editBucketSlug', async (req, res) => {
 
     const params = {
       content: slug,
-      slug: id,
+      slug: slug,
       title: id,
       type_slug: 'onesignal-details',
       metafields: [
@@ -174,6 +183,13 @@ app.post('/api/editBucketSlug', async (req, res) => {
           title: "addWebhookId",
           type: "text",
           children: null
+        },
+        {
+          value: bucketSlug,
+          key: "bucketSlug",
+          title: "bucketSlug",
+          type: "text",
+          children: null
         }
       ]
     }
@@ -187,7 +203,6 @@ app.post('/api/editBucketSlug', async (req, res) => {
 
 app.post('/api/removeBucketSlug/:id', async (req, res) => {
   try {
-    console.log(JSON.stringify(req.params,2,null)); 
     const { id } = req.params;
     if (!id) {
       throw new Error('No id provided');
@@ -195,12 +210,11 @@ app.post('/api/removeBucketSlug/:id', async (req, res) => {
 
     const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
     const bucketData = await searchBucket.getObject({ slug: id }).catch(() => undefined);
-    const deleteWebhookBucket =  Cosmic.bucket({ slug: id });
+    const deleteWebhookBucket =  Cosmic.bucket({ slug: bucketData.object.metadata.bucketSlug });
     await deleteWebhookBucket.deleteWebhook({id: bucketData.object.metadata.addWebhookId});
     await searchBucket.deleteObject({ slug: id }).catch(() => undefined);
     return res.status(200).send();
   } catch (e) {
-    console.error(e); // eslint-disable-line no-console
     return res.status(400).json({ error: e.message });
   }
 });
@@ -216,7 +230,6 @@ app.get('/api/getBucketSlug/:id', async (req, res) => {
     const bucketDetails = await searchBucket.getObject({ slug: id }).catch(() => undefined);
     return res.status(200).send(bucketDetails);
   } catch (e) {
-    console.error(e); // eslint-disable-line no-console
     return res.status(400).json({ error: e.message });
   }
 });

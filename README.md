@@ -1,9 +1,10 @@
 # Installation
-First install dependencies:
+
+## Install dependencies:
 ``
 npm install
 ``
-Start the server:
+## Start the server:
 ``
-npm run start
+npm run server
 ``
