@@ -12,17 +12,19 @@ app.use(bodyParser.json());
 const Cosmic = cosmic();
 
 app.post('/api/create', async function (request, response) {
-  const {bucket} = request.body.data;
-  const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
-  const bucketSlugRes = await searchBucket.getObject({ slug: bucket });
+  var onesignalapiid = request.query['apiid'];
+  var onesignalrestapikey = request.query['restapikey'];
+  var notificationheading = request.query['notificationheading'];
+  var notificationcontent = request.query['notificationcontent'];
   var headers = {
       "Content-Type": "application/json; charset=utf-8",
-      "Authorization": `Basic ${bucketSlugRes.object.metadata.onesignalrestapikey}`
+      "Authorization": `Basic ${onesignalrestapikey}`
   };
+
   var data = {
-        app_id: bucketSlugRes.object.metadata.onesignalapiid,
-        headings: { "en": bucketSlugRes.object.metadata.onesignalnotificationheading },
-        contents: { "en": bucketSlugRes.object.metadata.onesignalnotificationcontent },
+        app_id: onesignalapiid,
+        headings: { "en": notificationheading },
+        contents: { "en": notificationcontent },
         included_segments: ["All"]
     };
 
@@ -48,190 +50,6 @@ app.post('/api/create', async function (request, response) {
   req.write(JSON.stringify(data));
   req.end();
 
-  response.send(JSON.stringify(bucketSlugRes,null,2));
+  response.status(200).send('Notification Send Successfully!');
 });
-
-app.post('/api/addBucketSlug', async (req, res) => {
-  try {   
-    const { id, 
-            slug,
-            onesignalapiid,
-            onesignalrestapikey,
-            onesignalnotificationheading,
-            onesignalnotificationcontent,
-            addWebhookId,
-            bucketSlug
-          } = req.body;
-    if (!id || !slug) {
-      throw new Error('Must provide bucket id and slug');
-    }
-
-    const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
-
-    const params = {
-      content: slug,
-      slug: slug,
-      title: id,
-      type_slug: 'onesignal-details',
-      metafields: [
-        {
-          value: onesignalapiid,
-          key: "onesignalapiid",
-          title: "onesignal-api-id",
-          type: "text",
-          children: null
-        },
-        {
-          value: onesignalrestapikey,
-          key: "onesignalrestapikey",
-          title: "onesignal-rest-api-key",
-          type: "text",
-          children: null
-        },
-        {
-          value: onesignalnotificationheading,
-          key: "onesignalnotificationheading",
-          title: "onesignal-notification-heading",
-          type: "text",
-          children: null
-        },
-        {
-          value: onesignalnotificationcontent,
-          key: "onesignalnotificationcontent",
-          title: "onesignal-notification-content",
-          type: "text",
-          children: null
-        },
-        {
-          value: addWebhookId,
-          key: "addWebhookId",
-          title: "addWebhookId",
-          type: "text",
-          children: null
-        },
-        {
-          value: bucketSlug,
-          key: "bucketSlug",
-          title: "bucketSlug",
-          type: "text",
-          children: null
-        }
-      ]
-    }
-    await searchBucket.addObject(params);
-    return res.status(200).send();
-  } catch (e) {
-    console.error(e); // eslint-disable-line no-console
-    return res.status(400).json({ error: e.message });
-  }
-});
-
-app.post('/api/editBucketSlug', async (req, res) => {
-  try {   
-    const { id, 
-            slug,
-            onesignalapiid,
-            onesignalrestapikey,
-            onesignalnotificationheading,
-            onesignalnotificationcontent,
-            addWebhookId,
-            bucketSlug
-          } = req.body;
-    if (!id || !slug) {
-      throw new Error('Must provide bucket id and slug');
-    }
-
-    const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
-
-    const params = {
-      content: slug,
-      slug: slug,
-      title: id,
-      type_slug: 'onesignal-details',
-      metafields: [
-        {
-          value: onesignalapiid,
-          key: "onesignalapiid",
-          title: "onesignal-api-id",
-          type: "text",
-          children: null
-        },
-        {
-          value: onesignalrestapikey,
-          key: "onesignalrestapikey",
-          title: "onesignal-rest-api-key",
-          type: "text",
-          children: null
-        },
-        {
-          value: onesignalnotificationheading,
-          key: "onesignalnotificationheading",
-          title: "onesignal-notification-heading",
-          type: "text",
-          children: null
-        },
-        {
-          value: onesignalnotificationcontent,
-          key: "onesignalnotificationcontent",
-          title: "onesignal-notification-content",
-          type: "text",
-          children: null
-        },
-        {
-          value: addWebhookId,
-          key: "addWebhookId",
-          title: "addWebhookId",
-          type: "text",
-          children: null
-        },
-        {
-          value: bucketSlug,
-          key: "bucketSlug",
-          title: "bucketSlug",
-          type: "text",
-          children: null
-        }
-      ]
-    }
-    await searchBucket.editObject(params);
-    return res.status(200).send();
-  } catch (e) {
-    console.error(e); // eslint-disable-line no-console
-    return res.status(400).json({ error: e.message });
-  }
-});
-
-app.post('/api/removeBucketSlug/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      throw new Error('No id provided');
-    }
-
-    const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
-    const bucketData = await searchBucket.getObject({ slug: id }).catch(() => undefined);
-    const deleteWebhookBucket =  Cosmic.bucket({ slug: bucketData.object.metadata.bucketSlug });
-    await deleteWebhookBucket.deleteWebhook({id: bucketData.object.metadata.addWebhookId});
-    await searchBucket.deleteObject({ slug: id }).catch(() => undefined);
-    return res.status(200).send();
-  } catch (e) {
-    return res.status(400).json({ error: e.message });
-  }
-});
-
-app.get('/api/getBucketSlug/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      throw new Error('No id provided');
-    }
-
-    const searchBucket = Cosmic.bucket({ slug: 'onesignal-info' });
-    const bucketDetails = await searchBucket.getObject({ slug: id }).catch(() => undefined);
-    return res.status(200).send(bucketDetails);
-  } catch (e) {
-    return res.status(400).json({ error: e.message });
-  }
-});
-
 app.listen(port);
