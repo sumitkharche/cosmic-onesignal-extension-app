@@ -16,6 +16,7 @@ app.post('/api/create', async function (request, response) {
   var onesignalrestapikey = request.query['restapikey'];
   var notificationheading = request.query['notificationheading'];
   var notificationcontent = request.query['notificationcontent'];
+  var notificationurl = request.query['notificationurl'];
   var headers = {
       "Content-Type": "application/json; charset=utf-8",
       "Authorization": `Basic ${onesignalrestapikey}`
@@ -25,7 +26,8 @@ app.post('/api/create', async function (request, response) {
         app_id: onesignalapiid,
         headings: { "en": notificationheading },
         contents: { "en": notificationcontent },
-        included_segments: ["All"]
+        included_segments: ["All"],
+        url: notificationurl 
     };
 
   var options = {
